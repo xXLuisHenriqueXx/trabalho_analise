@@ -1,0 +1,90 @@
+{
+  "descricao": "Contraexemplo demonstrando que o algoritmo guloso (Vizinho Mais Próximo) não garante a solução ótima mesmo na ausência de empates em qualquer escolha.",
+  "n_cidades": 5,
+  "coordenadas": [
+    [
+      3,
+      0
+    ],
+    [
+      0,
+      0
+    ],
+    [
+      1,
+      0
+    ],
+    [
+      4,
+      0
+    ],
+    [
+      8,
+      0
+    ]
+  ],
+  "rota_vizinho_mais_proximo": [
+    0,
+    3,
+    2,
+    1,
+    4
+  ],
+  "custo_vizinho_mais_proximo": 18,
+  "rota_otima": [
+    0,
+    4,
+    3,
+    2,
+    1
+  ],
+  "custo_otimo": 16,
+  "custo_forca_bruta": 16,
+  "diferenca_absoluta": 2,
+  "acima_do_otimo_pct": 12.5,
+  "validacao_forca_bruta": true,
+  "passos_detalhados_nn": [
+    {
+      "origem": 0,
+      "escolhido": 3,
+      "distancia_escolhida": 1,
+      "distancias_candidatas": [
+        1,
+        2,
+        3,
+        5
+      ],
+      "houve_empate": false
+    },
+    {
+      "origem": 3,
+      "escolhido": 2,
+      "distancia_escolhida": 3,
+      "distancias_candidatas": [
+        3,
+        4,
+        4
+      ],
+      "houve_empate": false
+    },
+    {
+      "origem": 2,
+      "escolhido": 1,
+      "distancia_escolhida": 1,
+      "distancias_candidatas": [
+        1,
+        7
+      ],
+      "houve_empate": false
+    },
+    {
+      "origem": 1,
+      "escolhido": 4,
+      "distancia_escolhida": 8,
+      "distancias_candidatas": [
+        8
+      ],
+      "houve_empate": false
+    }
+  ]
+}
