@@ -1,0 +1,11 @@
+=== AMBIENTE EXPERIMENTAL ===
+Data e Hora: 2026-11-09 13:46:53
+Sistema Operacional: Windows 11 (10.0.26300)
+Arquitetura: AMD64
+Processador: Intel64 Family 6 Model 186 Stepping 2, GenuineIntel
+Python: 3.15.0 (tags/v3.15.0:d220409, Oct  9 2026, 11:55:56) [MSC v.1951 64 bit (AMD64)]
+Semente Aleatória: 42 (determinismo via random.Random(42))
+Modo de Execução: RÁPIDO (--rapido)
+Limite por execução HK: 120.0 s
+Tempo razoável considerado: 60.0 s
+Tamanho máximo sintético NN: 3200

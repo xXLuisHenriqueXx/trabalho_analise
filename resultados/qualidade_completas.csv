@@ -1,0 +1,4 @@
+instancia,cidades,otimo_TSPLIB,custo_partida_0,pct_acima_partida_0,melhor_custo,melhor_partida,pct_acima_melhor,pior_custo,pior_partida,pct_acima_pior,media_custos,desvio_custos,pct_acima_media
+berlin52,52,7542,8980,19.07,8181,39,8.47,10298,20,36.54,9375.58,473.75,24.31
+st70,70,675,830,22.96,796,16,17.93,911,69,34.96,841.26,25.61,24.63
+pr76,76,108159,153462,41.89,130921,15,21.04,157073,19,45.22,147178.41,6823.39,36.08
