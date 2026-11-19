@@ -1,10 +1,3 @@
-"""
-Busca determinística de um contraexemplo mostrando que o algoritmo do vizinho
-mais próximo (NN) não garante a solução ótima, mesmo sem qualquer empate nos passos.
-Gera e valida a menor instância euclidiana com n=5.
-Salva os resultados em resultados/contraexemplo.json.
-"""
-
 import itertools
 import json
 import os
@@ -14,11 +7,6 @@ from heuristico import vizinho_mais_proximo
 
 
 def verificar_empate_passos_nn(d, inicio=0):
-    """
-    Verifica se durante a execução do vizinho mais próximo a partir de 'inicio'
-    ocorre algum empate na escolha da menor distância entre os vértices não visitados.
-    Devolve (tem_empate, lista_de_passos).
-    """
     n = len(d)
     visitado = [False] * n
     visitado[inicio] = True
@@ -52,14 +40,7 @@ def verificar_empate_passos_nn(d, inicio=0):
 
 
 def buscar_menor_contraexemplo():
-    """
-    Busca determinística da menor instância euclidiana (n=5) com coordenadas
-    inteiras mínimas onde o vizinho mais próximo com partida 0 é estritamente
-    pior que o ótimo e nenhum passo do NN apresenta empate.
-    """
     n = 5
-    # Busca sistemática e lexicográfica em grade 1D pequena
-    # Na reta, a rota ótima é 2 * (max(x) - min(x)), e o NN oscila (pingue-pongue).
     for max_coord in range(5, 20):
         for comb in itertools.combinations(range(1, max_coord + 1), n - 1):
             coords_base = [(0, 0)] + [(x, 0) for x in comb]
@@ -106,7 +87,6 @@ def main():
         'passos_detalhados_nn': passos,
     }
 
-    # Impressão legível no terminal
     print("\n========================================================")
     print(" CONTRAEXEMPLO: VIZINHO MAIS PRÓXIMO NÃO É ÓTIMO")
     print("========================================================")
@@ -130,7 +110,6 @@ def main():
     print(f"  Diferença percentual: {acima_pct}% acima do ótimo")
     print("========================================================\n")
 
-    # Salva em resultados/contraexemplo.json
     pasta_saida = 'resultados'
     os.makedirs(pasta_saida, exist_ok=True)
     caminho_json = os.path.join(pasta_saida, 'contraexemplo.json')

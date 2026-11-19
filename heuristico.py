@@ -1,28 +1,3 @@
-"""
-Caixeiro viajante (TSP) - algoritmo HEURÍSTICO
-Paradigma: guloso (vizinho mais próximo)   Complexidade: O(n^2) tempo, O(n^2) memória (matriz)
-
-Como usar
----------
-Modo interativo (pergunta tudo):
-    python heuristico.py
-
-Modo direto (pelos argumentos):
-    python heuristico.py --instancia berlin52
-    python heuristico.py --instancia st70 --cidades 30 --inicio 5
-    python heuristico.py --instancia pr76 --todas-partidas
-    python heuristico.py --instancia berlin52 --cidades 10,20,30,52 --repeticoes 10 --csv vizinho.csv
-
-No Colab use o modo direto:   !python heuristico.py --instancia berlin52
-
-Observações
------------
-- As cidades são numeradas pelo ÍNDICE 0..n-1 (a cidade 1 do arquivo é o índice 0).
-- "--cidades k" usa as primeiras k cidades da instância. Sem esse argumento, usa a instância inteira.
-- A distância é a euclidiana arredondada ao inteiro mais próximo (regra EUC_2D da TSPLIB),
-  a mesma usada nos ótimos publicados: berlin52 = 7542, st70 = 675, pr76 = 108159.
-"""
-
 import argparse
 import math
 import os
@@ -34,11 +9,7 @@ PASTA_PADRAO = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'instanc
 INSTANCIAS = {'berlin52': 'berlin52.tsp.txt', 'st70': 'st70.tsp.txt', 'pr76': 'pr76.tsp.txt'}
 OTIMOS_TSPLIB = {'berlin52': 7542, 'st70': 675, 'pr76': 108159}
 
-
-# ---------------------------------------------------------------- funções base
-
 def ler_instancia(caminho):
-    """Lê um arquivo com linhas 'id x y' e devolve a lista de coordenadas (x, y)."""
     coords = []
     with open(caminho) as arquivo:
         for linha in arquivo:
@@ -50,7 +21,6 @@ def ler_instancia(caminho):
 
 
 def matriz_distancias(coords):
-    """Matriz n x n com a distância euclidiana arredondada (TSPLIB EUC_2D)."""
     n = len(coords)
     d = [[0] * n for _ in range(n)]
     for i in range(n):
@@ -64,7 +34,6 @@ def matriz_distancias(coords):
 
 
 def custo_rota(rota, d):
-    """Soma das distâncias da rota, incluindo a volta da última cidade para a primeira."""
     total = 0
     for k in range(len(rota) - 1):
         total += d[rota[k]][rota[k + 1]]
@@ -73,7 +42,6 @@ def custo_rota(rota, d):
 
 
 def medir(algoritmo, d, repeticoes):
-    """Roda o algoritmo 'repeticoes' vezes e devolve (resultado, tempo médio, desvio padrão)."""
     tempos = []
     resultado = None
     for _ in range(repeticoes):
@@ -84,12 +52,7 @@ def medir(algoritmo, d, repeticoes):
     desvio = statistics.stdev(tempos) if len(tempos) > 1 else 0.0
     return resultado, media, desvio
 
-
-# ---------------------------------------------------------------- algoritmo
-
 def vizinho_mais_proximo(d, inicio=0):
-    """Guloso: a partir de 'inicio', vai sempre para a cidade não visitada mais próxima.
-    Empate: fica a de menor índice (comparação com '<')."""
     n = len(d)
     visitado = [False] * n
     rota = [inicio]
@@ -108,10 +71,7 @@ def vizinho_mais_proximo(d, inicio=0):
     return rota
 
 
-# ---------------------------------------------------------------- execução
-
 def interpretar_cidades(texto, total):
-    """'52' -> [52];  '10,20,30' -> [10, 20, 30];  '5-20' -> [5, 6, ..., 20];  vazio -> [total]."""
     if texto is None or str(texto).strip() == '':
         return [total]
     texto = str(texto).strip()
@@ -186,7 +146,7 @@ def main():
     p.add_argument('--csv', help="salva os resultados neste arquivo .csv")
     p.add_argument('--sem-rota', action='store_true', help="não imprime a rota")
 
-    if len(sys.argv) == 1:      # sem argumentos: modo interativo
+    if len(sys.argv) == 1: 
         print("Vizinho mais próximo - modo interativo (Enter aceita o padrão)")
         nome = perguntar("Instância (berlin52, st70, pr76)", 'berlin52')
         cidades = perguntar("Cidades (ex.: 52, 10,20,30 ou 5-20; vazio = todas)", '')

@@ -1,15 +1,3 @@
-"""
-Execução sistemática dos experimentos do TSP para Held-Karp e Vizinho Mais Próximo.
-Uso: python experimentos.py [--rapido] [--saida resultados] [--limite 120] [--tempo-razoavel 60] [--n-max 3200]
-Gera em resultados/:
-  - hk_tempo.csv (E1)
-  - nn_prefixos.csv (E2)
-  - nn_sintetico.csv (E3)
-  - qualidade_completas.csv e qualidade_subinstancias.csv (E4)
-  - resumo.md (E5)
-  - ambiente.txt
-"""
-
 import argparse
 from datetime import datetime
 import csv
@@ -35,13 +23,11 @@ from heuristico import vizinho_mais_proximo
 
 
 def gravar_linha_csv(arquivo, writer, linha):
-    """Grava uma linha no CSV e força o flush no disco imediatamente."""
     writer.writerow(linha)
     arquivo.flush()
 
 
 def regressao_linear(xs, ys):
-    """Regressão linear simples por mínimos quadrados ordinários (stdlib)."""
     n = len(xs)
     if n < 2:
         return 0.0, 0.0, 0.0
@@ -61,7 +47,6 @@ def regressao_linear(xs, ys):
 
 
 def formatar_segundos(s):
-    """Formata tempo em segundos para representação amigável."""
     if s < 60:
         return f"{s:.2f} s"
     if s < 3600:
@@ -74,7 +59,6 @@ def formatar_segundos(s):
 
 
 def registrar_ambiente(pasta_saida, args):
-    """Gera o arquivo ambiente.txt detalhando o hardware, SO e parâmetros."""
     os.makedirs(pasta_saida, exist_ok=True)
     caminho = os.path.join(pasta_saida, 'ambiente.txt')
     with open(caminho, 'w', encoding='utf-8') as f:
@@ -93,7 +77,6 @@ def registrar_ambiente(pasta_saida, args):
 
 
 def experimento_1_hk_tempo(pasta_saida, k_max, limite, instancias_coords):
-    """E1: Held-Karp nos prefixos k=5..k_max em berlin52, st70 e pr76."""
     caminho_csv = os.path.join(pasta_saida, 'hk_tempo.csv')
     cabecalhos = [
         'instancia',
@@ -106,7 +89,7 @@ def experimento_1_hk_tempo(pasta_saida, k_max, limite, instancias_coords):
         'pico_memoria_mb',
     ]
 
-    resultados_hk = {}  # (instancia, k) -> {custo_otimo, tempo_medio_s, ...}
+    resultados_hk = {}
 
     print("\n--- [E1] Held-Karp: Tempo e Memória por Tamanho ---")
     with open(caminho_csv, 'w', newline='', encoding='utf-8') as f:
@@ -119,12 +102,10 @@ def experimento_1_hk_tempo(pasta_saida, k_max, limite, instancias_coords):
             for k in range(5, k_max + 1):
                 d = matriz_distancias(coords[:k])
 
-                # 1ª execução exploratória para estimativa do tempo
                 t0 = time.perf_counter()
                 rota, custo = held_karp(d)
                 t_primeira = time.perf_counter() - t0
 
-                # Repetições adaptativas
                 if t_primeira < 0.5:
                     total_reps = 10
                 elif t_primeira < 5.0:
@@ -143,11 +124,9 @@ def experimento_1_hk_tempo(pasta_saida, k_max, limite, instancias_coords):
                 media_t = statistics.mean(tempos)
                 desvio_t = statistics.stdev(tempos) if len(tempos) > 1 else 0.0
 
-                # Complexidade teórica O(k^2 * 2^k)
                 complexidade_teorica = (k ** 2) * (2 ** k)
                 razao_teorica = media_t / complexidade_teorica if complexidade_teorica > 0 else 0.0
 
-                # Memória com tracemalloc em execução SEPARADA (apenas k <= 18)
                 pico_mem_mb = ""
                 if k <= 18:
                     tracemalloc.start()
@@ -184,7 +163,6 @@ def experimento_1_hk_tempo(pasta_saida, k_max, limite, instancias_coords):
 
 
 def experimento_2_nn_prefixos(pasta_saida, instancias_coords, resultados_hk):
-    """E2: Vizinho Mais Próximo (partida 0) em todos os prefixos k=5..n, 30 repetições."""
     caminho_csv = os.path.join(pasta_saida, 'nn_prefixos.csv')
     cabecalhos = [
         'instancia',
@@ -209,7 +187,6 @@ def experimento_2_nn_prefixos(pasta_saida, instancias_coords, resultados_hk):
             for k in range(5, n_total + 1):
                 d = matriz_distancias(coords[:k])
 
-                # 30 repetições para medir o tempo do NN
                 tempos = []
                 rota = None
                 for _ in range(30):
@@ -221,7 +198,6 @@ def experimento_2_nn_prefixos(pasta_saida, instancias_coords, resultados_hk):
                 desvio_t = statistics.stdev(tempos)
                 custo = custo_rota(rota, d)
 
-                # Busca ótimo conhecido (HK ou TSPLIB)
                 otimo = ""
                 acima_pct = ""
                 if (nome, k) in resultados_hk:
@@ -248,7 +224,6 @@ def experimento_2_nn_prefixos(pasta_saida, instancias_coords, resultados_hk):
 
 
 def experimento_3_nn_sintetico(pasta_saida, n_max):
-    """E3: NN sintético em coordenadas uniformes [0,1000]^2, n=100..n_max, 5 repetições."""
     caminho_csv = os.path.join(pasta_saida, 'nn_sintetico.csv')
     cabecalhos = [
         'n',
@@ -274,7 +249,6 @@ def experimento_3_nn_sintetico(pasta_saida, n_max):
         for n in tamanhos:
             coords = [(rng.randint(0, 1000), rng.randint(0, 1000)) for _ in range(n)]
 
-            # Medição de tempo da construção da matriz (5 repetições)
             tempos_matriz = []
             for _ in range(5):
                 t0 = time.perf_counter()
@@ -283,10 +257,8 @@ def experimento_3_nn_sintetico(pasta_saida, n_max):
             media_mat = statistics.mean(tempos_matriz)
             desvio_mat = statistics.stdev(tempos_matriz)
 
-            # Matriz definitiva para o NN
             d = matriz_distancias(coords)
 
-            # Medição de tempo do NN (5 repetições)
             tempos_nn = []
             rota = None
             for _ in range(5):
@@ -297,7 +269,6 @@ def experimento_3_nn_sintetico(pasta_saida, n_max):
             desvio_nn = statistics.stdev(tempos_nn)
             custo = custo_rota(rota, d)
 
-            # Pico de memória da matriz em execução separada com tracemalloc
             tracemalloc.start()
             d_trace = matriz_distancias(coords)
             _, peak = tracemalloc.get_traced_memory()
@@ -325,7 +296,6 @@ def experimento_3_nn_sintetico(pasta_saida, n_max):
 
 
 def experimento_4_qualidade(pasta_saida, k_max_hk, instancias_coords, resultados_hk):
-    """E4: Qualidade do NN em instâncias completas e subinstâncias."""
     caminho_completas = os.path.join(pasta_saida, 'qualidade_completas.csv')
     cabecalhos_completas = [
         'instancia',
@@ -444,21 +414,18 @@ def experimento_4_qualidade(pasta_saida, k_max_hk, instancias_coords, resultados
 
 
 def experimento_5_resumo(pasta_saida, tempo_razoavel):
-    """E5: Síntese comparativa Teoria vs Prática e extrapolação."""
     caminho_hk = os.path.join(pasta_saida, 'hk_tempo.csv')
     caminho_sintetico = os.path.join(pasta_saida, 'nn_sintetico.csv')
     caminho_sub = os.path.join(pasta_saida, 'qualidade_subinstancias.csv')
     caminho_comp = os.path.join(pasta_saida, 'qualidade_completas.csv')
     caminho_resumo = os.path.join(pasta_saida, 'resumo.md')
 
-    # Lê dados do NN sintético para ajuste log-log
     dados_sint = []
     if os.path.exists(caminho_sintetico):
         with open(caminho_sintetico, encoding='utf-8') as f:
             for row in csv.DictReader(f):
                 dados_sint.append((int(row['n']), float(row['tempo_nn_medio_s'])))
 
-    # Ajuste log-log do NN: log(tempo) = slope * log(n) + intercept
     if len(dados_sint) >= 2:
         xs_nn = [math.log(n) for n, t in dados_sint]
         ys_nn = [math.log(t) for n, t in dados_sint]
@@ -468,8 +435,7 @@ def experimento_5_resumo(pasta_saida, tempo_razoavel):
 
     maior_n_nn_sub_1s = max([n for n, t in dados_sint if t <= 1.0], default=0)
 
-    # Lê dados do Held-Karp
-    dados_hk = []  # k, tempo
+    dados_hk = []
     if os.path.exists(caminho_hk):
         with open(caminho_hk, encoding='utf-8') as f:
             for row in csv.DictReader(f):
@@ -479,8 +445,6 @@ def experimento_5_resumo(pasta_saida, tempo_razoavel):
                     'tempo': float(row['tempo_medio_s']),
                 })
 
-    # Fator médio de crescimento por cidade a mais e regressão log2(tempo) x k
-    # Agrupa por instância
     fatores_instancia = {}
     maior_k_razoavel = 0
     k_tempo_medios = {}
@@ -492,7 +456,6 @@ def experimento_5_resumo(pasta_saida, tempo_razoavel):
             maior_k_razoavel = k
         k_tempo_medios.setdefault(k, []).append(t)
 
-    # Média de tempo por k entre todas as instâncias medidas
     ks_ordenados = sorted(k_tempo_medios)
     medias_por_k = [statistics.mean(k_tempo_medios[k]) for k in ks_ordenados]
 
@@ -503,7 +466,6 @@ def experimento_5_resumo(pasta_saida, tempo_razoavel):
 
     fator_medio = statistics.mean(fatores) if fatores else 0.0
 
-    # Regressão linear log2(tempo) x k
     if len(ks_ordenados) >= 2:
         xs_hk = [float(k) for k in ks_ordenados]
         ys_hk = [math.log2(t) for t in medias_por_k]
@@ -511,14 +473,11 @@ def experimento_5_resumo(pasta_saida, tempo_razoavel):
     else:
         slope_hk, intercept_hk, r2_hk = 0.0, 0.0, 0.0
 
-    # Extrapolação do Held-Karp para k = 23, 25, 30
-    # Usando o modelo log2(tempo) = slope_hk * k + intercept_hk => tempo = 2^(slope_hk * k + intercept_hk)
     extrapolacoes = {}
     for k_ext in (23, 25, 30):
         t_est = 2 ** (slope_hk * k_ext + intercept_hk)
         extrapolacoes[k_ext] = t_est
 
-    # Gaps médios do NN
     gaps_sub_p0 = []
     gaps_sub_media = []
     if os.path.exists(caminho_sub):
@@ -541,7 +500,6 @@ def experimento_5_resumo(pasta_saida, tempo_razoavel):
     gap_medio_comp_p0 = statistics.mean(gaps_comp_p0) if gaps_comp_p0 else 0.0
     gap_medio_comp_melhor = statistics.mean(gaps_comp_melhor) if gaps_comp_melhor else 0.0
 
-    # Escreve resumo.md
     with open(caminho_resumo, 'w', encoding='utf-8') as f:
         f.write("# Resumo Comparativo: Teoria vs. Prática no TSP\n\n")
 
@@ -591,7 +549,6 @@ def main():
     pasta_saida = args.saida
     os.makedirs(pasta_saida, exist_ok=True)
 
-    # Parâmetros adaptados para modo rápido
     if args.rapido:
         k_max_hk = 16
         n_max_sintetico = min(args.n_max, 800)
@@ -599,7 +556,6 @@ def main():
         k_max_hk = 22
         n_max_sintetico = args.n_max
 
-    # Carrega coordenadas das instâncias base
     instancias_coords = {}
     for nome, arq in INSTANCIAS.items():
         caminho = os.path.join(PASTA_PADRAO, arq)
@@ -610,22 +566,11 @@ def main():
     print(f" Modo: {'RÁPIDO' if args.rapido else 'COMPLETO'} | Saída: {pasta_saida}")
     print("================================================================")
 
-    # 0. Ambiente
     registrar_ambiente(pasta_saida, args)
-
-    # E1. Held-Karp: Tempo e Memória
     resultados_hk = experimento_1_hk_tempo(pasta_saida, k_max_hk, args.limite, instancias_coords)
-
-    # E2. NN nos prefixos
     experimento_2_nn_prefixos(pasta_saida, instancias_coords, resultados_hk)
-
-    # E3. NN sintético
     experimento_3_nn_sintetico(pasta_saida, n_max_sintetico)
-
-    # E4. Qualidade
     experimento_4_qualidade(pasta_saida, k_max_hk, instancias_coords, resultados_hk)
-
-    # E5. Resumo
     experimento_5_resumo(pasta_saida, args.tempo_razoavel)
 
     print("\n================================================================")

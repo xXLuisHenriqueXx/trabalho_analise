@@ -1,31 +1,3 @@
-"""
-Caixeiro viajante (TSP) - algoritmo EXATO
-Paradigma: programação dinâmica (Held-Karp)   Complexidade: O(n^2 * 2^n) tempo, O(n * 2^n) memória
-
-Como usar
----------
-Modo interativo (pergunta tudo):
-    python exato.py
-
-Modo direto (pelos argumentos):
-    python exato.py --instancia berlin52 --cidades 15
-    python exato.py --instancia st70 --cidades 12 --repeticoes 10
-    python exato.py --instancia berlin52 --cidades 5-20 --limite 60 --csv held_karp.csv
-    python exato.py --instancia berlin52 --cidades 4-9 --verificar
-
-No Colab use o modo direto:   !python exato.py --instancia berlin52 --cidades 15
-
-Observações
------------
-- "--cidades k" usa as primeiras k cidades da instância. É obrigatório: a instância inteira
-  (52, 70 ou 76 cidades) é grande demais para o Held-Karp.
-- Por segurança o programa recusa mais de 23 cidades (tempo e memória explodem).
-  Use --forcar para passar desse limite por sua conta.
-- --verificar compara o resultado com a força bruta (testa todas as rotas); só para até 10 cidades.
-- As cidades são numeradas pelo ÍNDICE 0..n-1 (a cidade 1 do arquivo é o índice 0).
-- A distância é a euclidiana arredondada ao inteiro mais próximo (regra EUC_2D da TSPLIB).
-"""
-
 import argparse
 import itertools
 import math
@@ -40,10 +12,8 @@ OTIMOS_TSPLIB = {'berlin52': 7542, 'st70': 675, 'pr76': 108159}
 MAX_CIDADES = 23
 
 
-# ---------------------------------------------------------------- funções base
 
 def ler_instancia(caminho):
-    """Lê um arquivo com linhas 'id x y' e devolve a lista de coordenadas (x, y)."""
     coords = []
     with open(caminho) as arquivo:
         for linha in arquivo:
@@ -55,7 +25,6 @@ def ler_instancia(caminho):
 
 
 def matriz_distancias(coords):
-    """Matriz n x n com a distância euclidiana arredondada (TSPLIB EUC_2D)."""
     n = len(coords)
     d = [[0] * n for _ in range(n)]
     for i in range(n):
@@ -69,7 +38,6 @@ def matriz_distancias(coords):
 
 
 def custo_rota(rota, d):
-    """Soma das distâncias da rota, incluindo a volta da última cidade para a primeira."""
     total = 0
     for k in range(len(rota) - 1):
         total += d[rota[k]][rota[k + 1]]
@@ -78,7 +46,6 @@ def custo_rota(rota, d):
 
 
 def medir(algoritmo, d, repeticoes):
-    """Roda o algoritmo 'repeticoes' vezes e devolve (resultado, tempo médio, desvio padrão)."""
     tempos = []
     resultado = None
     for _ in range(repeticoes):
@@ -90,23 +57,18 @@ def medir(algoritmo, d, repeticoes):
     return resultado, media, desvio
 
 
-# ---------------------------------------------------------------- algoritmo
-
 def held_karp(d):
-    """Programação dinâmica de Held-Karp. Devolve (rota, custo ótimo).
-    C[S][j] = menor custo saindo da cidade 0, visitando o conjunto S e terminando em j.
-    S é uma máscara de bits: a cidade j (j >= 1) usa o bit j-1."""
     n = len(d)
     m = n - 1
     INF = float('inf')
     C = [[INF] * n for _ in range(1 << m)]
     P = [[-1] * n for _ in range(1 << m)]
 
-    for j in range(1, n):                       # tamanho 1: 0 -> j
+    for j in range(1, n):                      
         C[1 << (j - 1)][j] = d[0][j]
         P[1 << (j - 1)][j] = 0
 
-    for S in range(1, 1 << m):                  # S em ordem crescente
+    for S in range(1, 1 << m):                 
         for j in range(1, n):
             if not (S >> (j - 1)) & 1:
                 continue
@@ -120,7 +82,7 @@ def held_karp(d):
                         C[S][j] = custo
                         P[S][j] = i
 
-    TODAS = (1 << m) - 1                        # fechar a volta para 0
+    TODAS = (1 << m) - 1                      
     melhor = INF
     ultima = -1
     for j in range(1, n):
@@ -129,7 +91,7 @@ def held_karp(d):
             melhor = custo
             ultima = j
 
-    rota = []                                   # reconstrução pelos "pais"
+    rota = []                                 
     S = TODAS
     j = ultima
     while j != 0:
@@ -143,7 +105,6 @@ def held_karp(d):
 
 
 def forca_bruta(d):
-    """Testa todas as rotas (só para conferir o Held-Karp em instâncias pequenas)."""
     n = len(d)
     melhor = float('inf')
     for perm in itertools.permutations(range(1, n)):
@@ -151,10 +112,8 @@ def forca_bruta(d):
     return melhor
 
 
-# ---------------------------------------------------------------- execução
 
 def interpretar_cidades(texto, total, forcar):
-    """'15' -> [15];  '10,12,14' -> [10, 12, 14];  '5-20' -> [5, 6, ..., 20]."""
     texto = str(texto).strip()
     if '-' in texto:
         a, b = texto.split('-')
@@ -218,7 +177,7 @@ def main():
     p.add_argument('--csv', help="salva os resultados neste arquivo .csv")
     p.add_argument('--sem-rota', action='store_true', help="não imprime a rota")
 
-    if len(sys.argv) == 1:      # sem argumentos: modo interativo
+    if len(sys.argv) == 1:
         print("Held-Karp - modo interativo (Enter aceita o padrão)")
         nome = perguntar("Instância (berlin52, st70, pr76)", 'berlin52')
         cidades = perguntar(f"Cidades (ex.: 15, 10,12,14 ou 5-20; máximo {MAX_CIDADES})", '15')

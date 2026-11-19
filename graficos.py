@@ -1,11 +1,3 @@
-"""
-Geração de figuras e tabelas prontas para o relatório e apresentação.
-Lê os arquivos CSV e JSON em resultados/ e gera:
-  - figuras/*.png (200 dpi) e figuras/*.pdf (vetorial)
-  - tabelas/*.md (Markdown) e tabelas/*.tex (LaTeX com booktabs)
-Uso: python graficos.py [--resultados resultados] [--figuras figuras] [--tabelas tabelas]
-"""
-
 import argparse
 import csv
 import json
@@ -19,17 +11,16 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
-# Paleta e configuração visual consistente
 CORES = {
-    'berlin52': '#1f77b4',  # azul
-    'st70': '#2ca02c',      # verde
-    'pr76': '#d62728',      # vermelho
-    'nn': '#ff7f0e',        # laranja
-    'teorico': '#333333',   # cinza escuro / preto
-    'p0': '#1f77b4',        # azul
-    'melhor': '#2ca02c',    # verde
-    'pior': '#d62728',      # vermelho
-    'media': '#9467bd',     # roxo
+    'berlin52': '#1f77b4',  
+    'st70': '#2ca02c',      
+    'pr76': '#d62728',      
+    'nn': '#ff7f0e',        
+    'teorico': '#333333',
+    'p0': '#1f77b4',        
+    'melhor': '#2ca02c',    
+    'pior': '#d62728',      
+    'media': '#9467bd',     
 }
 
 MARCADORES = {
@@ -65,10 +56,8 @@ def salvar_figura(fig, pasta_figuras, nome_base):
     print(f"  Figura gerada: {caminho_png} e {caminho_pdf}")
 
 
-# ---------------------------------------------------------------- GRÁFICOS
 
 def grafico_1_hk_tempo(pasta_resultados, pasta_figuras):
-    """1. hk_tempo.* : tempo × k, eixo y log, séries por instância com barras de erro e curva teórica ajustada."""
     caminho_csv = os.path.join(pasta_resultados, 'hk_tempo.csv')
     if not os.path.exists(caminho_csv):
         print(f"Arquivo não encontrado: {caminho_csv}")
@@ -110,7 +99,6 @@ def grafico_1_hk_tempo(pasta_resultados, pasta_figuras):
             linewidth=1.5, markersize=5
         )
 
-    # Curva teórica ajustada: c * k^2 * 2^k
     if todas_razoes:
         c_medio = np.median(todas_razoes)
         ks_teoricos = np.linspace(min_k, max_k, 200)
@@ -131,7 +119,6 @@ def grafico_1_hk_tempo(pasta_resultados, pasta_figuras):
 
 
 def grafico_2_hk_razao(pasta_resultados, pasta_figuras):
-    """2. hk_razao.* : tempo/(k²·2^k) × k (deve ficar ~constante)."""
     caminho_csv = os.path.join(pasta_resultados, 'hk_tempo.csv')
     if not os.path.exists(caminho_csv):
         return
@@ -179,7 +166,6 @@ def grafico_2_hk_razao(pasta_resultados, pasta_figuras):
 
 
 def grafico_3_hk_memoria(pasta_resultados, pasta_figuras):
-    """3. hk_memoria.* : pico de memória × k, escala log, com referência n·2ⁿ."""
     caminho_csv = os.path.join(pasta_resultados, 'hk_tempo.csv')
     if not os.path.exists(caminho_csv):
         return
@@ -238,7 +224,6 @@ def grafico_3_hk_memoria(pasta_resultados, pasta_figuras):
 
 
 def grafico_4_nn_loglog(pasta_resultados, pasta_figuras):
-    """4. nn_loglog.* : tempo × n em log-log (sintético + prefixos), com reta ajustada e referência n²."""
     caminho_sintetico = os.path.join(pasta_resultados, 'nn_sintetico.csv')
     caminho_prefixos = os.path.join(pasta_resultados, 'nn_prefixos.csv')
 
@@ -251,7 +236,6 @@ def grafico_4_nn_loglog(pasta_resultados, pasta_figuras):
                 ns_sint.append(int(r['n']))
                 tempos_sint.append(float(r['tempo_nn_medio_s']))
 
-    # Prefixos
     prefixos = {}
     if os.path.exists(caminho_prefixos):
         with open(caminho_prefixos, encoding='utf-8') as f:
@@ -278,14 +262,12 @@ def grafico_4_nn_loglog(pasta_resultados, pasta_figuras):
             label="Sintético uniforme [0, 1000]²"
         )
 
-        # Ajuste log-log nos sintéticos
         log_ns = np.log(ns_sint)
         log_ts = np.log(tempos_sint)
         poly = np.polyfit(log_ns, log_ts, 1)
         slope = poly[0]
         intercept = poly[1]
 
-        # R2
         preds = np.polyval(poly, log_ns)
         r2 = 1.0 - (np.sum((log_ts - preds) ** 2) / np.sum((log_ts - np.mean(log_ts)) ** 2))
 
@@ -298,7 +280,6 @@ def grafico_4_nn_loglog(pasta_resultados, pasta_figuras):
             label=f"Ajuste log-log: $t \\propto n^{{{slope:.2f}}}$ ($R^2={r2:.4f}$)"
         )
 
-        # Referência teórica n^2
         c_quad = np.exp(intercept)
         t_ref_quad = c_quad * (n_grid ** 2.0)
         ax.plot(
@@ -318,7 +299,6 @@ def grafico_4_nn_loglog(pasta_resultados, pasta_figuras):
 
 
 def grafico_5_nn_gap_subinstancias(pasta_resultados, pasta_figuras):
-    """5. nn_gap_subinstancias.* : % acima do ótimo × k (partida 0 e média das partidas)."""
     caminho_csv = os.path.join(pasta_resultados, 'qualidade_subinstancias.csv')
     if not os.path.exists(caminho_csv):
         return
@@ -356,7 +336,6 @@ def grafico_5_nn_gap_subinstancias(pasta_resultados, pasta_figuras):
 
 
 def grafico_6_nn_gap_completas(pasta_resultados, pasta_figuras):
-    """6. nn_gap_completas.* : barras (melhor, partida 0, pior) vs ótimo TSPLIB por instância."""
     caminho_csv = os.path.join(pasta_resultados, 'qualidade_completas.csv')
     if not os.path.exists(caminho_csv):
         return
@@ -385,7 +364,6 @@ def grafico_6_nn_gap_completas(pasta_resultados, pasta_figuras):
     b3 = ax.bar(x + 0.5 * largura, pct_media, largura, label='Média das Partidas', color=CORES['media'])
     b4 = ax.bar(x + 1.5 * largura, pct_pior, largura, label='Pior Partida', color=CORES['pior'])
 
-    # Rótulos de valor nas barras
     for barras in (b1, b2, b3, b4):
         for b in barras:
             altura = b.get_height()
@@ -403,7 +381,6 @@ def grafico_6_nn_gap_completas(pasta_resultados, pasta_figuras):
     ax.set_title("Qualidade da Heurística NN nas Instâncias Completas da TSPLIB")
     ax.legend(loc='upper left')
 
-    # Margem superior para os números não cortarem
     lim_atual = ax.get_ylim()
     ax.set_ylim(0, lim_atual[1] * 1.15)
 
@@ -411,7 +388,6 @@ def grafico_6_nn_gap_completas(pasta_resultados, pasta_figuras):
 
 
 def grafico_7_contraexemplo(pasta_resultados, pasta_figuras):
-    """7. contraexemplo.* : rota NN e rota ótima lado a lado."""
     caminho_json = os.path.join(pasta_resultados, 'contraexemplo.json')
     if not os.path.exists(caminho_json):
         return
@@ -428,10 +404,8 @@ def grafico_7_contraexemplo(pasta_resultados, pasta_figuras):
 
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(11, 4.5))
 
-    # Para visualização das rotas em 1D, elevamos os arcos em alturas diferentes para distinguir as sobreposições
     def plotar_rota_1d(ax, rota, titulo, cor_linha, custo, rotulo_status):
         xs = [coords[i][0] for i in range(len(coords))]
-        # Desenha nós na reta y=0
         ax.scatter(xs, [0] * len(xs), color='darkblue', s=90, zorder=5)
 
         for i, (x, y) in enumerate(coords):
@@ -443,28 +417,22 @@ def grafico_7_contraexemplo(pasta_resultados, pasta_figuras):
                 ha='center', fontsize=9, fontweight='bold'
             )
 
-        # Destaca o nó de partida 0
         x0 = coords[rota[0]][0]
         ax.scatter([x0], [0], color='crimson', s=160, zorder=6, edgecolors='black', linewidth=1.5)
         ax.annotate("Partida (0)", (x0, 0), xytext=(0, 18), textcoords='offset points',
                     ha='center', fontsize=9, color='crimson', fontweight='bold')
 
-        # Conecta os arcos com arcos parabólicos para não sobrepor na reta
         n_passos = len(rota)
         ciclo = rota + [rota[0]]
         for idx in range(n_passos):
             u, v = ciclo[idx], ciclo[idx + 1]
             xu, xv = coords[u][0], coords[v][0]
-            # Altura proporcional à distância e ao sentido
             altura = 0.35 * (idx + 1)
-            x_meio = (xu + xv) / 2.0
             curva_x = np.linspace(xu, xv, 50)
-            # Parábola
             curva_y = 4 * altura * (curva_x - xu) * (xv - curva_x) / ((xv - xu) ** 2) if xu != xv else np.zeros_like(curva_x)
 
             ax.plot(curva_x, curva_y, color=cor_linha, linewidth=1.6, alpha=0.85)
 
-            # Seta no ponto médio
             meio_idx = 25
             ax.annotate(
                 "",
@@ -499,13 +467,10 @@ def grafico_7_contraexemplo(pasta_resultados, pasta_figuras):
     salvar_figura(fig, pasta_figuras, 'contraexemplo')
 
 
-# ---------------------------------------------------------------- TABELAS
 
 def gerar_tabelas(pasta_resultados, pasta_tabelas):
-    """Gera tabelas/*.md e tabelas/*.tex (booktabs)."""
     os.makedirs(pasta_tabelas, exist_ok=True)
 
-    # 1. Tabela Held-Karp por k
     caminho_hk = os.path.join(pasta_resultados, 'hk_tempo.csv')
     if os.path.exists(caminho_hk):
         linhas_hk = []
@@ -513,7 +478,6 @@ def gerar_tabelas(pasta_resultados, pasta_tabelas):
             for r in csv.DictReader(f):
                 linhas_hk.append(r)
 
-        # Markdown
         caminho_md = os.path.join(pasta_tabelas, 'tempo_hk.md')
         with open(caminho_md, 'w', encoding='utf-8') as f:
             f.write("| Instância | Cidades ($k$) | Repetições | Tempo Médio (s) | Desvio Padrão (s) | Custo Ótimo | Razão Teórica | Pico Memória (MB) |\n")
@@ -527,27 +491,7 @@ def gerar_tabelas(pasta_resultados, pasta_tabelas):
                 )
         print(f"  Tabela gerada: {caminho_md}")
 
-        # LaTeX (booktabs)
-        caminho_tex = os.path.join(pasta_tabelas, 'tempo_hk.tex')
-        with open(caminho_tex, 'w', encoding='utf-8') as f:
-            f.write("% Tabela: Tempo e Memória do Held-Karp\n")
-            f.write("\\begin{table}[htbp]\n\\centering\n\\small\n")
-            f.write("\\caption{Desempenho experimental do algoritmo exato de Held-Karp por tamanho de subinstância ($k$).}\n")
-            f.write("\\label{tab:tempo_hk}\n")
-            f.write("\\begin{tabular}{lrrrrrrr}\n\\toprule\n")
-            f.write("Instância & $k$ & Rep. & Tempo Médio (s) & Desvio (s) & Custo Ótimo & Razão Teórica & Memória (MB) \\\\\n\\midrule\n")
-            for r in linhas_hk:
-                mem = f"{float(r['pico_memoria_mb']):.2f}" if r['pico_memoria_mb'] != "" else "--"
-                razao_formatada = f"{float(r['razao_teorica']):.2e}".replace('e-0', '\\times 10^{-').replace('e-', '\\times 10^{-') + '}'
-                f.write(
-                    f"{r['instancia']} & {r['cidades']} & {r['repeticoes']} & "
-                    f"{float(r['tempo_medio_s']):.6f} & {float(r['tempo_desvio_s']):.6f} & "
-                    f"{r['custo_otimo']} & ${razao_formatada}$ & {mem} \\\\\n"
-                )
-            f.write("\\bottomrule\n\\end{tabular}\n\\end{table}\n")
-        print(f"  Tabela gerada: {caminho_tex}")
 
-    # 2. Tabela Qualidade NN Completas
     caminho_comp = os.path.join(pasta_resultados, 'qualidade_completas.csv')
     if os.path.exists(caminho_comp):
         linhas_comp = []
@@ -555,7 +499,6 @@ def gerar_tabelas(pasta_resultados, pasta_tabelas):
             for r in csv.DictReader(f):
                 linhas_comp.append(r)
 
-        # Markdown
         caminho_md = os.path.join(pasta_tabelas, 'qualidade_nn_completas.md')
         with open(caminho_md, 'w', encoding='utf-8') as f:
             f.write("| Instância | Cidades ($n$) | Ótimo TSPLIB | Partida 0 (Custo / Gap) | Melhor Partida (Custo / Partida / Gap) | Pior Partida (Custo / Partida / Gap) | Média Custos | Desvio Custos | Gap Médio |\n")
@@ -570,26 +513,8 @@ def gerar_tabelas(pasta_resultados, pasta_tabelas):
                 )
         print(f"  Tabela gerada: {caminho_md}")
 
-        # LaTeX (booktabs)
-        caminho_tex = os.path.join(pasta_tabelas, 'qualidade_nn_completas.tex')
-        with open(caminho_tex, 'w', encoding='utf-8') as f:
-            f.write("% Tabela: Qualidade do Vizinho Mais Próximo nas Instâncias Completas\n")
-            f.write("\\begin{table}[htbp]\n\\centering\n\\small\n")
-            f.write("\\caption{Qualidade da rota obtida pelo algoritmo do Vizinho Mais Próximo nas instâncias completas da TSPLIB.}\n")
-            f.write("\\label{tab:qualidade_nn_completas}\n")
-            f.write("\\begin{tabular}{lrrrrrrrr}\n\\toprule\n")
-            f.write("Instância & $n$ & Ótimo & Partida 0 & Gap P0 & Melhor Partida & Gap Melhor & Média & Gap Médio \\\\\n\\midrule\n")
-            for r in linhas_comp:
-                f.write(
-                    f"{r['instancia']} & {r['cidades']} & {r['otimo_TSPLIB']} & "
-                    f"{r['custo_partida_0']} & +{r['pct_acima_partida_0']}\\% & "
-                    f"{r['melhor_custo']} (p={r['melhor_partida']}) & +{r['pct_acima_melhor']}\\% & "
-                    f"{r['media_custos']} & +{r['pct_acima_media']}\\% \\\\\n"
-                )
-            f.write("\\bottomrule\n\\end{tabular}\n\\end{table}\n")
-        print(f"  Tabela gerada: {caminho_tex}")
 
-    # 3. Tabela NN Sintético
+
     caminho_sint = os.path.join(pasta_resultados, 'nn_sintetico.csv')
     if os.path.exists(caminho_sint):
         linhas_sint = []
@@ -597,7 +522,6 @@ def gerar_tabelas(pasta_resultados, pasta_tabelas):
             for r in csv.DictReader(f):
                 linhas_sint.append(r)
 
-        # Markdown
         caminho_md = os.path.join(pasta_tabelas, 'nn_sintetico.md')
         with open(caminho_md, 'w', encoding='utf-8') as f:
             f.write("| $n$ | Repetições | Tempo Matriz (s) | Desvio Matriz (s) | Tempo NN (s) | Desvio NN (s) | Memória Matriz (MB) | Custo NN |\n")
@@ -611,24 +535,6 @@ def gerar_tabelas(pasta_resultados, pasta_tabelas):
                 )
         print(f"  Tabela gerada: {caminho_md}")
 
-        # LaTeX (booktabs)
-        caminho_tex = os.path.join(pasta_tabelas, 'nn_sintetico.tex')
-        with open(caminho_tex, 'w', encoding='utf-8') as f:
-            f.write("% Tabela: Desempenho do NN em Instâncias Sintéticas\n")
-            f.write("\\begin{table}[htbp]\n\\centering\n\\small\n")
-            f.write("\\caption{Tempo de construção da matriz de distâncias e tempo de execução do Vizinho Mais Próximo em instâncias sintéticas uniformes.}\n")
-            f.write("\\label{tab:nn_sintetico}\n")
-            f.write("\\begin{tabular}{rrrrrrr}\n\\toprule\n")
-            f.write("$n$ & Rep. & Tempo Matriz (s) & Desvio Matriz (s) & Tempo NN (s) & Desvio NN (s) & Memória Matriz (MB) \\\\\n\\midrule\n")
-            for r in linhas_sint:
-                f.write(
-                    f"{r['n']} & {r['repeticoes']} & "
-                    f"{float(r['tempo_matriz_medio_s']):.6f} & {float(r['tempo_matriz_desvio_s']):.6f} & "
-                    f"{float(r['tempo_nn_medio_s']):.6f} & {float(r['tempo_nn_desvio_s']):.6f} & "
-                    f"{float(r['pico_memoria_matriz_mb']):.2f} \\\\\n"
-                )
-            f.write("\\bottomrule\n\\end{tabular}\n\\end{table}\n")
-        print(f"  Tabela gerada: {caminho_tex}")
 
 
 def main():
@@ -658,7 +564,7 @@ def main():
     grafico_6_nn_gap_completas(args.resultados, args.figuras)
     grafico_7_contraexemplo(args.resultados, args.figuras)
 
-    print("\n2. Gerando tabelas (Markdown e LaTeX)...")
+    print("\n2. Gerando tabelas (Markdown)...")
     gerar_tabelas(args.resultados, args.tabelas)
 
     print("\n================================================================")
